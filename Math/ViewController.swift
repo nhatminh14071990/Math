@@ -12,8 +12,11 @@ class ViewController: UIViewController {
 
     var totalRight: Int = 0
     var totalWrong: Int = 0
-    var numResult: Int = 0
+    var numResult: Float = 0.0
     var totalTime: Int = 0
+    var arrayRandomExits: [Float] = []
+    let calculation = ["+", "-", "*", "/"]
+    let configCeiling: Int = 10
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -36,6 +39,7 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var labelTotalWrong: UILabel!
     
+    @IBOutlet weak var labelCalculation: UILabel!
     
     @IBOutlet weak var labelNumber1: UILabel!
     
@@ -47,22 +51,20 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var button1: UIButton!
     
-    @IBAction func actionButtonResult1(_ sender: Any) {
-        let value = Int((button1.titleLabel?.text)!)
-        self.reRenderData(inputNumResult: value!)
+    
+    @IBAction func actionButtonResult(_ sender: UIButton) {
+        
+        if let buttonTitle = sender.title(for: .normal) {
+            //print(buttonTitle)
+            
+            self.reRenderData(inputNumResult: Float(buttonTitle)!)
+        }
+        
     }
     
-    @IBAction func actionButtonResult2(_ sender: Any) {
-        let value = Int((button2.titleLabel?.text)!)
-        self.reRenderData(inputNumResult: value!)
-    }
-    
-    @IBAction func actionButtonResult3(_ sender: Any) {
-        let value = Int((button3.titleLabel?.text)!)
-        self.reRenderData(inputNumResult: value!)
-    }
-    
-    func reRenderData(inputNumResult: Int){
+    func reRenderData(inputNumResult: Float){
+//        print("numResult: \(numResult)")
+//        print("inputNumResult: \(inputNumResult)")
         if(numResult == inputNumResult){
             self.updateRight()
         }else{
@@ -85,23 +87,64 @@ class ViewController: UIViewController {
     }
     
     func generaNumber(){
-        let lottoMaker = UniqueRandomGenerator(ceiling: 100)
+        //gan ngau nhien phep tinh
+        let indexCalculationCurrent = arc4random_uniform(UInt32(calculation.count))
+        let calculationCurrent = calculation[Int(indexCalculationCurrent)]
+        //let calculationCurrent = "/"
+        labelCalculation.text = calculationCurrent
         
-        let results = Array(lottoMaker.prefix(2))
+        var lottoMaker = UniqueRandomGenerator(ceiling: configCeiling)
+        var results = Array(lottoMaker.prefix(2))
+        var randomNum1: Float32 = Float32(results[0])
+        var randomNum2: Float32 = Float32(results[1])
         
-        let randomNum1: UInt32 = UInt32(results[0])
+        
+        if(calculationCurrent == "-"){//neu la phep tru: num1 >= num2
+            
+            repeat{
+                
+                lottoMaker = UniqueRandomGenerator(ceiling: configCeiling)
+                
+                results = Array(lottoMaker.prefix(2))
+                
+                randomNum1 = Float32(results[0])
+                
+                randomNum2 = Float32(results[1])
+            }while(randomNum1 < randomNum2)
+            
+        }else if(calculationCurrent == "/"){//neu la phep chia: num2 != 0
+            
+            repeat{
+                
+                lottoMaker = UniqueRandomGenerator(ceiling: configCeiling)
+                
+                results = Array(lottoMaker.prefix(2))
+                
+                randomNum1 = Float32(results[0])
+                
+                randomNum2 = Float32(results[1])
+            }while(randomNum2 == 0)
+            
+        }
+        
         labelNumber1.text = String(randomNum1)
-        let randomNum2: UInt32 = UInt32(results[1])
         labelNumber2.text = String(randomNum2)
         
-        numResult = Int(randomNum1 + randomNum2)
+        let mathExpression = NSExpression(format: "\(randomNum1) \(calculationCurrent) \(randomNum2)")
+        numResult = (mathExpression.expressionValue(with: nil, context: nil) as? Float)!
         
-        var arrayRandomNumber = Array(lottoMaker.prefix(3))
+        //hien thi ngau nhien 3 ket qua
+        var lottoMaker2 = UniqueRandomGenerator(ceiling: 100)
+        var arrayRandomNumber = Array(lottoMaker2.prefix(3))
+        repeat{
+            lottoMaker2 = UniqueRandomGenerator(ceiling: 100)
+            arrayRandomNumber = Array(lottoMaker2.prefix(3))
+        }while(arrayRandomNumber.contains(numResult))
         
         //dat ket qua o vi tri ngau nhien
-        let lottoMaker2 = UniqueRandomGenerator(ceiling: 3)
-        let indexRandom = Array(lottoMaker2.prefix(1))[0]
-        arrayRandomNumber[indexRandom] = numResult
+        let lottoMaker3 = UniqueRandomGenerator(ceiling: 3)
+        let indexRandom = Array(lottoMaker3.prefix(1))[0]
+        arrayRandomNumber[Int(indexRandom)] = numResult
         
         button1.setTitle(String(arrayRandomNumber[0]), for: .normal)
         button2.setTitle(String(arrayRandomNumber[1]), for: .normal)
@@ -118,20 +161,20 @@ class ViewController: UIViewController {
     public struct UniqueRandomGenerator: Sequence, IteratorProtocol {
         
         private let ceiling: Int
-        private var _existing: Set<Int>
+        private var _existing: Set<Float>
         
         /// ceiling is the highest number that can be drawn
         init(ceiling: Int) {
             self.ceiling = ceiling
-            self._existing = Set<Int>()
+            self._existing = Set<Float>()
         }
         
         // generate random number between 0..<ceiling
-        private var randomPick: Int {
-            return Int(arc4random_uniform(UInt32(ceiling)))
+        private var randomPick: Float {
+            return Float(arc4random_uniform(UInt32(ceiling)))
         }
         
-        public mutating func next() -> Int? {
+        public mutating func next() -> Float? {
             // if we have a ceiling of 10, then it's impossible to
             // more than 10 unique numbers
             guard _existing.count < ceiling else {
@@ -140,7 +183,7 @@ class ViewController: UIViewController {
             
             // continue getting a random pick until we find one
             // that hasn't been picked yet
-            var pick: Int
+            var pick: Float
             repeat {
                 pick = randomPick
             } while _existing.contains(pick)
