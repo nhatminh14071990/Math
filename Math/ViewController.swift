@@ -127,8 +127,8 @@ class ViewController: UIViewController {
             
         }
         
-        labelNumber1.text = String(randomNum1)
-        labelNumber2.text = String(randomNum2)
+        labelNumber1.text = self.formatNumber(inputNumber: Double(randomNum1))
+        labelNumber2.text = self.formatNumber(inputNumber: Double(randomNum2))
         
         let mathExpression = NSExpression(format: "\(randomNum1) \(calculationCurrent) \(randomNum2)")
         numResult = (mathExpression.expressionValue(with: nil, context: nil) as? Float)!
@@ -146,9 +146,9 @@ class ViewController: UIViewController {
         let indexRandom = Array(lottoMaker3.prefix(1))[0]
         arrayRandomNumber[Int(indexRandom)] = numResult
         
-        button1.setTitle(String(arrayRandomNumber[0]), for: .normal)
-        button2.setTitle(String(arrayRandomNumber[1]), for: .normal)
-        button3.setTitle(String(arrayRandomNumber[2]), for: .normal)
+        button1.setTitle(self.formatNumber(inputNumber: Double(arrayRandomNumber[0])), for: .normal)
+        button2.setTitle(self.formatNumber(inputNumber: Double(arrayRandomNumber[1])), for: .normal)
+        button3.setTitle(self.formatNumber(inputNumber: Double(arrayRandomNumber[2])), for: .normal)
         
     }
     
@@ -156,6 +156,18 @@ class ViewController: UIViewController {
         totalTime = totalTime + 1
         let totalTimeString: String = String(totalTime)
         labelTimer.text = totalTimeString
+    }
+    
+    func formatNumber(inputNumber: Double) -> String{
+        if(self.numberHasDecimal(inputNumber: inputNumber)){
+            return String(inputNumber)
+        }
+        return String(Int(inputNumber))
+    }
+    
+    func numberHasDecimal(inputNumber: Double) -> Bool{
+        let isInteger = floor(inputNumber) == inputNumber
+        return !isInteger
     }
     
     public struct UniqueRandomGenerator: Sequence, IteratorProtocol {
